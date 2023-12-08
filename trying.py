@@ -77,8 +77,10 @@ async def bonus_done(message: types.Message, state: FSMContext):
 async def handling_bonus(message: types.Message, state: FSMContext):
     img = message.photo
     await state.update_data(waiting_feetback_img=img)
-    await bot.send_photo(chat_id=-4005785609, photo=img[0].file_id)
     await state.clear()
+
+    caption = f'user: {message.from_user.username}\nuser_id: {message.from_user.id}'
+    await bot.send_photo(chat_id=-4005785609, photo=img[0].file_id, caption=caption)
 
 
 @dp.message(F.text == 'Задать вопрос')
