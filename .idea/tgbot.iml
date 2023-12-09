@@ -5,4 +5,11 @@
     <orderEntry type="jdk" jdkName="tg" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/care_bot" />
+      </list>
+    </option>
+  </component>
 </module>
