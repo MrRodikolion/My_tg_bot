@@ -3,6 +3,7 @@ import logging
 
 from aiogram import Bot, Dispatcher
 
+from database import db
 from handlers import client, admin
 from conf import admin_chat_id
 
@@ -14,8 +15,11 @@ dp.include_routers(client.client_router, admin.admin_router)
 
 
 async def main():
-    await admin.set_admin_commands(bot)
+    await db.create_connection()
 
+    # await admin.set_admin_commands(bot)
+
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 

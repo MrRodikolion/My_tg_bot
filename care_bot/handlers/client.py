@@ -1,4 +1,5 @@
 from conf import admin_chat_id
+from database import db
 
 from aiogram import Bot, Router, types, F
 from aiogram.filters.command import Command
@@ -28,9 +29,10 @@ bonus_inst_keyboard = ReplyKeyboardMarkup(keyboard=bonus_inst_btns, resize_keybo
 class BonusGroup(StatesGroup):
     waiting_feetback_img = State()
     waiting_inst_img = State()
+    waiting_question = State()
 
 
-@client_router.message(F.text == 'Главное меню', F.chat.type == 'private')
+@client_router.message(F.text == 'Главное меню', F.chat.id != admin_chat_id)
 async def main_menu(message: types.Message):
     message_text = ('Здравствуйте! Спасибо, что обратились в службу поддержки.\n\n'
                     'Выберите, пожалуйста, один из вариантов.\n\n'
@@ -38,12 +40,12 @@ async def main_menu(message: types.Message):
     await message.answer(message_text, reply_markup=main_menu_keyboard)
 
 
-@client_router.message(Command("start"), F.chat.type == 'private')
+@client_router.message(Command("start"), F.chat.id != admin_chat_id)
 async def cmd_start(message: types.Message):
     await main_menu(message)
 
 
-@client_router.message(F.text == 'Бонус за отзыв', F.chat.type == 'private')
+@client_router.message(F.text == 'Бонус за отзыв', F.chat.id != admin_chat_id)
 async def bonus(message: types.Message):
     message_text = ('Чтобы получить бонус, выполните несколько простых действий.\n\n'
                     '1. Откройте приложение Wildberries на телефоне.\n'
@@ -57,9 +59,10 @@ async def bonus(message: types.Message):
     await message.answer(message_text, reply_markup=bonus_keyboard)
 
 
-@client_router.message(F.text == 'Я отавил(-а) отзыв', F.chat.type == 'private')
+@client_router.message(F.text == 'Я отавил(-а) отзыв', F.chat.id != admin_chat_id)
 async def bonus_done(message: types.Message, state: FSMContext):
     await state.set_state(BonusGroup.waiting_feetback_img)
+
     message_text = (
         'Сделайте скриншот оставленного отзыва и пришлите его сюда (отправляйте, пожалуйста, только скриншот, без текста).\n\n'
         '❗️ Скриншот необходимо сделать из личного раздела Ваших отзывов «Отзывы и вопросы» по ссылке '
@@ -68,8 +71,8 @@ async def bonus_done(message: types.Message, state: FSMContext):
     await message.answer(message_text, reply_markup=to_main_menu_keyboard)
 
 
-@client_router.message(BonusGroup.waiting_feetback_img, F.chat.type == 'private')
-async def handling_bonus(message: types.Message, state: FSMContext, bot: Bot):
+@client_router.message(BonusGroup.waiting_feetback_img, F.chat.id != admin_chat_id)
+async def processing_bonus(message: types.Message, state: FSMContext, bot: Bot):
     img = message.photo
     await state.update_data(waiting_feetback_img=img)
 
@@ -79,13 +82,26 @@ async def handling_bonus(message: types.Message, state: FSMContext, bot: Bot):
     await message.reply(message_text, reply_markup=to_main_menu_keyboard)
 
 
-@client_router.message(F.text == 'Задать вопрос', F.chat.type == 'private')
-async def question(message: types.Message):
+@client_router.message(F.text == 'Задать вопрос', F.chat.id != admin_chat_id)
+async def question(message: types.Message, state: FSMContext):
+    await state.set_state(BonusGroup.waiting_question)
+
     message_text = 'Расскажите, какой у Вас вопрос и мы быстро поможем решить Вашу проблему.'
     await message.answer(message_text, reply_markup=to_main_menu_keyboard)
 
 
-@client_router.message(F.text == 'Бонус за отметку в inst', F.chat.type == 'private')
+@client_router.message(BonusGroup.waiting_question, F.chat.id != admin_chat_id)
+async def processing_question(message: types.Message, state: FSMContext):
+    await state.update_data(waiting_question=message.text)
+
+    message_text = 'Ваш вопрос принят'
+    await message.answer(message_text)
+
+    await db.add_question(message.from_user.id, message.text)
+    await main_menu(message)
+
+
+@client_router.message(F.text == 'Бонус за отметку в inst', F.chat.id != admin_chat_id)
 async def bonus_inst(message: types.Message):
     message_text = (
         'Мы дарим 300₽ за отметку в сторис или посте Instagram каждому клиенту с АКТИВНЫМ аккаунтом от 50 подписчиков. (1 товар = 1 бонус)\n\n'
@@ -97,7 +113,7 @@ async def bonus_inst(message: types.Message):
     await message.answer(message_text, reply_markup=bonus_inst_keyboard)
 
 
-@client_router.message(F.text == 'Я опублтковал(-а) сторис', F.chat.type == 'private')
+@client_router.message(F.text == 'Я опублтковал(-а) сторис', F.chat.id != admin_chat_id)
 async def bonnus_inst_done(message: types.Message):
     message_text = (
         'Пришлите в диалог скриншот после того, как сторис или пост «провисит» указанное время (10-12 часов) '
@@ -105,13 +121,13 @@ async def bonnus_inst_done(message: types.Message):
     await message.answer(message_text, reply_markup=to_main_menu_keyboard)
 
 
-@client_router.message(F.text == 'Акционные товары', F.chat.type == 'private')
+@client_router.message(F.text == 'Акционные товары', F.chat.id != admin_chat_id)
 async def sales_products(message: types.Message):
     message_text = 'Каталог товаров можно глянуть на странице: \nhttps://bmulti.store/'
     await message.answer(message_text, reply_markup=to_main_menu_keyboard)
 
 
-@client_router.message(F.text == 'Наши ресурсы', F.chat.type == 'private')
+@client_router.message(F.text == 'Наши ресурсы', F.chat.id != admin_chat_id)
 async def urls_to_store(message: types.Message):
     message_text = ('Спасибо за интерес, проявленный к нашему бренду!🥰\n\n\n'
                     'Следите за нами в Instagram\n'

@@ -1,1 +1,1 @@
-admin_chat_id = -4042871521
+admin_chat_id = 1302103582

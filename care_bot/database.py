@@ -14,7 +14,7 @@ class DataBase:
         await self.con.execute('''CREATE TABLE IF NOT EXISTS questions 
                                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 user_id INTEGER,
-                                question TEXT
+                                question TEXT,
                                 is_solved BOOLEAN DEFAULT false)''')
 
     async def add_question(self, user_id: int, question: str):
@@ -25,11 +25,17 @@ class DataBase:
         async with self.con.execute('''SELECT * FROM questions WHERE is_solved = false''') as cur:
             return await cur.fetchall()
 
+    async def get_unsolved_questions_id(self):
+        async with self.con.execute('''SELECT id FROM questions WHERE is_solved = false''') as cur:
+            return await cur.fetchall()
+
     async def make_un_to_solved(self, question_id: int):
-        async with self.con.execute('''UPDATE question SET is_solved = true WHERE id = ?''', (question_id,)):
+        async with self.con.execute('''UPDATE questions SET is_solved = true WHERE id = ?''', (question_id,)):
             await self.con.commit()
 
     async def make_solved_to_un(self, question_id: int):
-        async with self.con.execute('''UPDATE question SET is_solved = false WHERE id = ?''', (question_id,)):
+        async with self.con.execute('''UPDATE questions SET is_solved = false WHERE id = ?''', (question_id,)):
             await self.con.commit()
 
+
+db = DataBase()
