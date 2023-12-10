@@ -8,9 +8,9 @@ except BaseException:
 
 from aiogram import Bot, Router, types, F
 from aiogram.filters.command import Command
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 client_router = Router()
 

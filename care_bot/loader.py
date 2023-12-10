@@ -5,7 +5,6 @@ from aiogram import Bot, Dispatcher
 
 from database import db
 from handlers import client, admin
-from conf import admin_chat_id
 
 logging.basicConfig(level=logging.INFO)
 
