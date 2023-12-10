@@ -1,5 +1,10 @@
-from conf import admin_chat_id
-from database import db
+try:
+    from ..conf import admin_chat_id
+    from ..database import db
+except BaseException:
+    from conf import admin_chat_id
+    from database import db
+
 
 from aiogram import Bot, Router, types, F
 from aiogram.filters.command import Command
@@ -42,6 +47,7 @@ async def main_menu(message: types.Message):
 
 @client_router.message(Command("start"), F.chat.id != admin_chat_id)
 async def cmd_start(message: types.Message):
+    await db.add_user(message.from_user.id)
     await main_menu(message)
 
 

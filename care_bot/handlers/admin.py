@@ -1,5 +1,9 @@
-from conf import admin_chat_id
-from database import db
+try:
+    from ..conf import admin_chat_id
+    from ..database import db
+except BaseException:
+    from conf import admin_chat_id
+    from database import db
 
 from aiogram import Bot, Router, types, F
 from aiogram.filters.command import Command
@@ -103,3 +107,12 @@ async def next_question(call: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(processed_question=questions[q_id])
     await state.update_data(question_id=q_id)
+
+
+@admin_router.message(Command('send'))
+async def send(message: types.Message, bot: Bot):
+    message_text = message.text[message.text.find(' '):]
+    users = await db.get_users()
+    for user in users:
+        user_id = user[1]
+        await bot.send_message(user_id, message_text)
